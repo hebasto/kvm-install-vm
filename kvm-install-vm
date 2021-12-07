@@ -445,6 +445,22 @@ ssh_authorized_keys:
 
 timezone: ${TIMEZONE}
 
+apt:
+  primary:
+    - arches: [default]
+      search:
+        - http://mirror.hetzner.de/ubuntu/packages
+        - http://archive.ubuntu.com/ubuntu
+
+packages:
+ - nfs-common
+ 
+mounts:
+ - [ "192.168.122.1:/home/jonasschnelli/vmshared",/mnt/shared, nfs, "rw,user,exec", "0", "0" ]
+
+bootcmd:
+ - echo 'APT::Periodic::Enable "0";' > /etc/apt/apt.conf.d/10periodic
+            
 # Remove cloud-init when finished with it
 runcmd:
   - ${NETRESTART}
@@ -480,7 +496,7 @@ _EOF_
         # Workaround to prevent virt-resize from renumbering partitions and breaking grub
         # See https://bugzilla.redhat.com/show_bug.cgi?id=1472039
         # Ubuntu will automatically grow the partition to the new size on its first boot
-        if [[ "$DISTRO" = "ubuntu1804" ]] || [[ "$DISTRO" = "amazon2" ]]
+        if [[ "$DISTRO" = "ubuntu1804" ]] || [[ "$DISTRO" = "ubuntu1604" ]] || [[ "$DISTRO" = "amazon2" ]]
         then
             qemu-img resize $DISK $DISK_SIZE &>> ${VMNAME}.log \
                 && ok \
@@ -565,6 +581,7 @@ _EOF_
         --disk ${CI_ISO},device=cdrom \
         --network ${NETWORK_PARAMS} \
         --os-type=linux \
+        --filesystem /home/jonasschnelli/discopop/shared,/home/ubuntu/shared \
         --os-variant=${OS_VARIANT} \
         --graphics ${GRAPHICS},port=${PORT},listen=localhost \
         --noautoconsole &>> ${VMNAME}.log && ok ) \
